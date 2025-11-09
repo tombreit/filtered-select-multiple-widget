@@ -173,4 +173,4 @@ BSD 3-Clause license.
 
 ## License
 
-ISC
+MIT
