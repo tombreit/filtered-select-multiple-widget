@@ -35,11 +35,11 @@ The Django widget is a thousand times better than mine. But I hope to gradually 
 ## Demo
 
 ```bash
-npm install
+npm ci
 npm run demo
 ```
 
-The demo includes a theme switcher navigation bar to showcase integration with Bootstrap 5, DaisyUI, and Tailwind CSS.
+The demo includes a theme switcher to showcase integration with Bootstrap 5, DaisyUI, and Tailwind CSS.
 
 ## Installation
 
@@ -75,7 +75,7 @@ const widget = new FilteredSelectMultiple(select);
 | `text` | `object` | see defaults | Override UI copy (`availableLabel`, `chosenLabel`, `filterPlaceholder`, `availableFilterPlaceholder`, `chosenFilterPlaceholder`, `addAll`, `addSelected`, `removeSelected`, `removeAll`). If `availableLabel` and `chosenLabel` are not provided, the widget will attempt to auto-detect them from an associated `<label>` element. |
 | `theme` | `Theme` | `defaultTheme` | CSS theme configuration for styling framework integration. |
 
-### Theming & Framework Integration
+### Theming
 
 The widget supports some UI frameworks through configurable themes:
 
@@ -124,6 +124,7 @@ new FilteredSelectMultiple(select, { theme: customTheme });
 - `controls` - Button container
 - `button`, `buttonAddAll`, `buttonAddSelected`, `buttonRemoveSelected`, `buttonRemoveAll` - Control buttons
 - `buttonDisabled` - Disabled button modifier
+- `button_svg` - Button SVG icon
 
 ### Destroying the widget
 

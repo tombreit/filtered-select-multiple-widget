@@ -9,6 +9,15 @@
     "url": "https://thms.de"
   },
   "type": "module",
+  "main": "./src/index.js",
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=14"
+  },
   "homepage": "https://tombreit.github.io/filtered-select-multiple-widget/",
   "repository": {
     "type": "git",
