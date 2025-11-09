@@ -11,7 +11,7 @@
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "https://gitlab.gwdg.de/t.breitner/filtered-select-multiple-widget.git"
+    "url": "https://github.com/tombreit/filtered-select-multiple-widget.git"
   },
   "exports": {
     ".": {

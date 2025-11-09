@@ -44,7 +44,7 @@ The demo includes a theme switcher navigation bar to showcase integration with B
 ## Installation
 
 ```bash
-npm install git+https://gitlab.gwdg.de/t.breitner/filtered-select-multiple-widget.git
+npm install git+https://github.com/tombreit/filtered-select-multiple-widget.git
 ```
 
 ## Usage
