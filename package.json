@@ -1,0 +1,32 @@
+{
+  "name": "filtered-select-multiple-widget",
+  "version": "0.0.3",
+  "description": "ES module implementation of Django's FilteredSelectMultiple widget.",
+  "license": "MIT",
+  "author": {
+    "name": "Thomas Breitner",
+    "email": "mail@thms.de",
+    "url": "https://thms.de"
+  },
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://gitlab.gwdg.de/t.breitner/filtered-select-multiple-widget.git"
+  },
+  "exports": {
+    ".": {
+      "import": "./src/index.js",
+      "default": "./src/index.js"
+    }
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  },
+  "scripts": {
+    "test": "node --check src/index.js && node --check src/FilteredSelectMultiple.js && node --check src/themes.js",
+    "pre-demo": "ln -sf ../src docs/src",
+    "demo": "http-server docs/ -p 8000 -o",
+    "pre-build": "rm -rf docs/src",
+    "build": "cp -r src docs/src"
+  }
+}

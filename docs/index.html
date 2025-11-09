@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>Filtered Select Multiple Demo</title>
+  <style id="base-styles">
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f4f6f8;
+    }
+
+    body {
+      max-width: 1200px !important;
+      margin: 0 auto !important;
+    }
+
+    body>h1 {
+      font-size: 2rem;
+      font-weight: bold;
+      margin: 1rem 0;
+    }
+
+    .plain-container {
+      padding: 2rem 1rem 2rem 1rem;
+    }
+
+    /* Theme Navigation */
+    .theme-nav {
+      background: #fff;
+      padding: 1rem;
+      margin-bottom: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .theme-nav-container {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .theme-nav-label {
+      font-weight: 600;
+      color: #374151;
+      margin-right: 0.5rem;
+    }
+
+    .theme-btn {
+      padding: 0.5rem 1rem;
+      border: 2px solid #e5e7eb;
+      background: #fff;
+      color: #374151;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .theme-btn:hover {
+      border-color: #0052cc;
+      color: #0052cc;
+    }
+
+    .theme-btn.active {
+      background: #0052cc;
+      border-color: #0052cc;
+      color: #fff;
+    }
+
+    /* Default theme styles */
+    .demo-container {}
+
+    .demo-card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 2rem;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+    }
+
+    .demo-card h1 {
+      margin-top: 0;
+      margin-bottom: 1rem;
+      color: #111827;
+    }
+
+    .demo-card .description {
+      font-weight: bold;
+      margin-bottom: 2rem;
+    }
+
+    .code-example {
+      margin-top: 2rem;
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+    }
+
+    .code-example h3 {
+      margin-top: 0;
+      color: #e2e8f0;
+      font-size: 1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .code-example pre {
+      margin: 0;
+    }
+
+    .code-example code {
+      font-family: 'Courier New', monospace;
+      font-size: 0.875rem;
+    }
+
+    /* Default widget styles */
+    .filtered-select-multiple {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      justify-content: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .fsm-column {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      min-width: 220px;
+    }
+
+    .fsm-label {
+      font-weight: 600;
+    }
+
+    .fsm-filter {
+      padding: 0.5rem;
+      border-radius: 6px;
+      border: 1px solid #d0d6e0;
+    }
+
+    .fsm-select {
+      min-width: 220px;
+      padding: 0.25rem;
+      border-radius: 6px;
+      border: 1px solid #d0d6e0;
+      background: #fff;
+    }
+
+    .fsm-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .fsm-button {
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      border: none;
+      background: #0052cc;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.2s ease-in-out;
+    }
+
+    .fsm-button:disabled {
+      cursor: not-allowed;
+      background: #cbd5f5;
+      color: #49526f;
+    }
+
+    .fsm-button:not(:disabled):hover {
+      background: #0a66e6;
+    }
+
+    .fsm-button svg {
+      display: inline-block;
+    }
+  </style>
+  <style id="theme-styles"></style>
+</head>
+
+<body>
+  <h1 id="demo-title">Filtered Select Multiple Demo</h1>
+
+  <p>
+
+    A dependency-free, JavaScript implementation of Django's dual-pane “FilteredSelectMultiple” widget. It transforms a
+    native <code>&lt;select multiple&gt;</code> element into a picker with move buttons and client-side filtering.
+  </p>
+
+  <h2>Motivation</h2>
+
+  <p>
+    I had been missing the beautiful and, above all, practical Django admin widget `filter-horizontal` outside of the
+    Django Admin interface for quite some time.
+  </p>
+
+  <h2>Links</h2>
+  <ul>
+    <li><a href=""></a>Docs</li>
+    <li><a href=""></a>Repository</li>
+    <li><a href=""></a>Demo (you are here)</li>
+  </ul>
+
+  <!-- Theme Navigation -->
+  <nav class="theme-nav">
+    <div class="theme-nav-container">
+      <span class="theme-nav-label">Theme:</span>
+      <button class="theme-btn active" data-theme="default">Default</button>
+      <button class="theme-btn" data-theme="bootstrap5">Bootstrap 5</button>
+      <button class="theme-btn" data-theme="tailwind">Tailwind CSS</button>
+      <button class="theme-btn" data-theme="daisyui">DaisyUI</button>
+    </div>
+  </nav>
+
+  <!-- Demo Content -->
+  <div class="demo-container" id="demo-container">
+    <div class="demo-card" id="demo-card">
+      <p class="description" id="demo-description">
+      </p>
+
+      <label for="demo-select" class="fsm-label">Permissions</label>
+      <select id="demo-select" name="demo-select" multiple size="12">
+        <optgroup label="Admin">
+          <option value="admin.log.add">Admin | Log entry | Add</option>
+          <option value="admin.log.change">Admin | Log entry | Change</option>
+          <option value="admin.log.delete">Admin | Log entry | Delete</option>
+          <option value="admin.log.view" selected>Admin | Log entry | View</option>
+        </optgroup>
+        <optgroup label="Repairs">
+          <option value="repair.device.add">Repairs | Device | Add</option>
+          <option value="repair.device.change">Repairs | Device | Change</option>
+          <option value="repair.device.delete">Repairs | Device | Delete</option>
+          <option value="repair.device.view">Repairs | Device | View</option>
+        </optgroup>
+        <optgroup label="Comments">
+          <option value="comments.add">Comments | Add</option>
+          <option value="comments.change">Comments | Change</option>
+          <option value="comments.delete">Comments | Delete</option>
+          <option value="comments.view">Comments | View</option>
+        </optgroup>
+      </select>
+
+      <div class="code-example">
+        <h3>Code Example</h3>
+        <pre><code id="code-example">Loading...</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { ThemeSwitcher } from './themeSwitcher.js';
+
+    // Initialize theme switcher
+    const themeSwitcher = new ThemeSwitcher();
+    themeSwitcher.init().catch(error => {
+      console.error('Failed to initialize theme switcher:', error);
+    });
+  </script>
+</body>
+
+</html>
