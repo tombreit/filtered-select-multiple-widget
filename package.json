@@ -21,7 +21,7 @@
   "homepage": "https://tombreit.github.io/filtered-select-multiple-widget/",
   "repository": {
     "type": "git",
-    "url": "https://github.com/tombreit/filtered-select-multiple-widget.git"
+    "url": "git+https://github.com/tombreit/filtered-select-multiple-widget.git"
   },
   "bugs": {
     "url": "https://github.com/tombreit/filtered-select-multiple-widget/issues"
