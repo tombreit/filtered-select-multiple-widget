@@ -7,37 +7,82 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'package.json'
 
 permissions:
-  contents: read
-  id-token: write  # Required for OIDC
+  contents: write
+  id-token: write
 
 jobs:
   publish:
-    # prevent this action from running on forks
     if: github.repository == 'tombreit/filtered-select-multiple-widget'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+
       - uses: actions/setup-node@v6
         with:
           node-version: 24
+
       - name: Install dependencies
         run: npm ci
-      - name: Extract version from package.json
-        uses: sergeysova/jq-action@v2
-        id: version
-        with:
-          cmd: 'jq .version package.json -r'
-      - name: Get latest tag
-        uses: actions-ecosystem/action-get-latest-tag@v1
-        id: get-latest-tag
-      - name: Publish GitHub Release
-        uses: release-drafter/release-drafter@v6
-        if: ${{ contains(steps.get-latest-tag.outputs.tag, steps.version.outputs.value) == false }}
-        with:
-          version: ${{ steps.version.outputs.value }}
-          publish: true
-      - name: Publish to NPM
-        if: ${{ contains(steps.get-latest-tag.outputs.tag, steps.version.outputs.value) == false }}
+
+      - name: Read package name & version
+        id: pkg
+        run: |
+          name=$(node -e "console.log(require('./package.json').name)")
+          version=$(node -e "console.log(require('./package.json').version)")
+          echo "name=$name" >> $GITHUB_OUTPUT
+          echo "version=$version" >> $GITHUB_OUTPUT
+
+      - name: Debug package info
+        run: |
+          echo "Package: ${{ steps.pkg.outputs.name }}, Version: ${{ steps.pkg.outputs.version }}"
+
+      - name: Get latest published version
+        id: npm-view
+        run: |
+          published=$(npm view "${{ steps.pkg.outputs.name }}" version --silent 2>/dev/null || echo "")
+          echo "published=$published" >> $GITHUB_OUTPUT
+
+      - name: Debug published version
+        run: |
+          echo "Published version: ${{ steps.npm-view.outputs.published }}"
+
+      - name: Check if version is newer
+        id: check
+        run: |
+          new="${{ steps.pkg.outputs.version }}"
+          pub="${{ steps.npm-view.outputs.published }}"
+          if [ -z "$pub" ] || [ "$new" != "$pub" ]; then
+            # Simple semver compare (major.minor.patch)
+            IFS='.' read -r n1 n2 n3 <<< "${new%%-*}"
+            IFS='.' read -r p1 p2 p3 <<< "${pub%%-*}"
+            if [ "$n1" -gt "$p1" ] || [ "$n1" -eq "$p1" -a "$n2" -gt "$p2" ] || [ "$n1" -eq "$p1" -a "$n2" -eq "$p2" -a "$n3" -gt "$p3" ]; then
+              echo "is_newer=true" >> $GITHUB_OUTPUT
+            else
+              echo "is_newer=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "is_newer=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Debug version check
+        run: |
+          echo "Is newer: ${{ steps.check.outputs.is_newer }}"
+
+      - name: Create tag & release
+        if: ${{ steps.check.outputs.is_newer == 'true' }}
+        run: |
+          version="${{ steps.pkg.outputs.version }}"
+          tag="v${version}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$tag" -m "Release $version"
+          git push origin "$tag"
+          gh release create "$tag" --title "Release $version" --generate-notes
+
+      - name: Publish to npm
+        if: ${{ steps.check.outputs.is_newer == 'true' }}
         run: npm publish
