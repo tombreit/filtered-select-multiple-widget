@@ -1,4 +1,4 @@
-# Shameless plug of
+# Shameless inspiration of
 # https://gomakethings.com/how-to-automatically-create-a-new-release-and-publish-to-npm-whenever-package.json-is-updated-using-a-github-action/
 
 name: Publish
