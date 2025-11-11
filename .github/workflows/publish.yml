@@ -1,0 +1,43 @@
+# Shameless plug of
+# https://gomakethings.com/how-to-automatically-create-a-new-release-and-publish-to-npm-whenever-package.json-is-updated-using-a-github-action/
+
+name: Publish
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  id-token: write  # Required for OIDC
+
+jobs:
+  publish:
+    # prevent this action from running on forks
+    if: github.repository == 'tombreit/filtered-select-multiple-widget'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Install dependencies
+        run: npm ci
+      - name: Extract version from package.json
+        uses: sergeysova/jq-action@v2
+        id: version
+        with:
+          cmd: 'jq .version package.json -r'
+      - name: Get latest tag
+        uses: actions-ecosystem/action-get-latest-tag@v1
+        id: get-latest-tag
+      - name: Publish GitHub Release
+        uses: release-drafter/release-drafter@v6
+        if: ${{ contains(steps.get-latest-tag.outputs.tag, steps.version.outputs.value) == false }}
+        with:
+          version: ${{ steps.version.outputs.value }}
+          publish: true
+      - name: Publish to NPM
+        if: ${{ contains(steps.get-latest-tag.outputs.tag, steps.version.outputs.value) == false }}
+        run: npm publish
