@@ -1,5 +1,10 @@
 # Filtered Select Multiple Widget
 
+[![npm version](https://img.shields.io/npm/v/filtered-select-multiple-widget)](https://www.npmjs.com/package/filtered-select-multiple-widget)
+[![license](https://img.shields.io/npm/l/filtered-select-multiple-widget)](https://github.com/tombreit/filtered-select-multiple-widget/blob/main/LICENSE)
+[![Publish](https://github.com/tombreit/filtered-select-multiple-widget/actions/workflows/publish.yml/badge.svg)](https://github.com/tombreit/filtered-select-multiple-widget/actions/workflows/publish.yml)
+[![Deploy](https://github.com/tombreit/filtered-select-multiple-widget/actions/workflows/deploy.yml/badge.svg)](https://github.com/tombreit/filtered-select-multiple-widget/actions/workflows/deploy.yml)
+
 A dependency-free, JavaScript implementation of Django's dual-pane “FilteredSelectMultiple” widget. It transforms a native `<select multiple>` element into a picker with move buttons and client-side filtering.
 
 ![Screenshot Filtered Select Multiple Widget](./docs/filtered-select-multiple-widget-screenshot.png)
