@@ -1,6 +1,9 @@
 /**
- * Theme definitions for FilteredSelectMultiple widget
- * Simple objects mapping element types to CSS class strings
+ * Theme definitions for FilteredSelectMultiple widget.
+ * Plain objects mapping element roles to CSS class strings.
+ *
+ * All keys use camelCase. Every key listed in defaultTheme MUST be present
+ * in custom themes (missing keys are filled from defaultTheme at runtime).
  */
 
 /**
@@ -16,12 +19,12 @@ export const defaultTheme = {
   select: "fsm-select",
   controls: "fsm-controls",
   button: "fsm-button",
-  button_addAll: "fsm-add-all",
-  button_addSelected: "fsm-add-selected",
-  button_removeSelected: "fsm-remove-selected",
-  button_removeAll: "fsm-remove-all",
+  buttonAddAll: "fsm-add-all",
+  buttonAddSelected: "fsm-add-selected",
+  buttonRemoveSelected: "fsm-remove-selected",
+  buttonRemoveAll: "fsm-remove-all",
   buttonDisabled: "fsm-button-disabled",
-  button_svg: "fsm-button-svg",
+  counter: "fsm-counter",
 };
 
 /**
@@ -36,13 +39,13 @@ export const bootstrap5Theme = {
   filter: "form-control form-control-sm mb-2",
   select: "form-select flex-grow-1",
   controls: "d-flex flex-column justify-content-center gap-2 px-3",
-  button: "btn btn-sm btn-primary",
-  button_addAll: "",
-  button_addSelected: "",
-  button_removeSelected: "",
-  button_removeAll: "",
-  buttonDisabled: "disabled",
-  button_svg: "d-inline-block",
+  button: "btn btn-sm d-inline-flex align-items-center gap-1",
+  buttonAddAll: "btn-outline-primary justify-content-end",
+  buttonAddSelected: "btn-primary justify-content-end",
+  buttonRemoveSelected: "btn-primary justify-content-start",
+  buttonRemoveAll: "btn-outline-primary justify-content-start",
+  buttonDisabled: "btn-secondary",
+  counter: "text-muted small",
 };
 
 /**
@@ -57,13 +60,13 @@ export const daisyUITheme = {
   filter: "input input-bordered input-sm mb-2 w-full",
   select: "select select-bordered w-full flex-grow",
   controls: "flex flex-col justify-center gap-2 px-4",
-  button: "btn btn-sm",
-  button_addAll: "btn-secondary",
-  button_addSelected: "btn-primary",
-  button_removeSelected: "btn-primary",
-  button_removeAll: "btn-secondary",
+  button: "btn btn-sm inline-flex items-center gap-1",
+  buttonAddAll: "btn-outline btn-secondary justify-end",
+  buttonAddSelected: "btn-primary justify-end",
+  buttonRemoveSelected: "btn-primary justify-start",
+  buttonRemoveAll: "btn-outline btn-secondary justify-start",
   buttonDisabled: "btn-disabled",
-  button_svg: "",
+  counter: "text-sm opacity-70",
 };
 
 /**
@@ -78,11 +81,11 @@ export const tailwindTheme = {
   filter: "border border-slate-300 rounded px-3 py-2 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500",
   select: "border border-slate-300 rounded px-2 py-1 min-w-[200px] flex-grow",
   controls: "flex flex-col justify-center gap-2 px-4",
-  button: "inline-flex items-center gap-2 px-3 py-2 text-sm border rounded hover:bg-slate-50 transition-colors",
-  button_addAll: "border-slate-300",
-  button_addSelected: "bg-blue-600 text-white border-blue-600 hover:bg-blue-700",
-  button_removeSelected: "bg-blue-600 text-white border-blue-600 hover:bg-blue-700",
-  button_removeAll: "border-slate-300",
-  buttonDisabled: "opacity-50 cursor-not-allowed",
-  button_svg: "",
+  button: "inline-flex items-center gap-2 px-3 py-2 text-sm border rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
+  buttonAddAll: "border-slate-300 hover:bg-slate-50 justify-end",
+  buttonAddSelected: "bg-blue-600 text-white border-blue-600 hover:bg-blue-700 justify-end",
+  buttonRemoveSelected: "bg-blue-600 text-white border-blue-600 hover:bg-blue-700 justify-start",
+  buttonRemoveAll: "border-slate-300 hover:bg-slate-50 justify-start",
+  buttonDisabled: "",
+  counter: "text-xs text-slate-500",
 };

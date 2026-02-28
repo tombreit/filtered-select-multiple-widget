@@ -1,31 +1,142 @@
 import { defaultTheme } from "./themes.js";
+import { icons } from "./icons.js";
+
+/**
+ * Default CSS injected once when the default theme is used.
+ * Avoids the need for users to ship a separate .css file.
+ */
+const DEFAULT_CSS = `
+.filtered-select-multiple {
+  display: flex;
+  gap: 1rem;
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+.fsm-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 220px;
+  flex: 1 1 220px;
+}
+.fsm-label {
+  font-weight: 600;
+}
+.fsm-counter {
+  font-size: 0.85em;
+  opacity: 0.7;
+  font-weight: normal;
+}
+.fsm-filter {
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #d0d6e0;
+}
+.fsm-select {
+  min-width: 220px;
+  padding: 0.25rem;
+  border-radius: 6px;
+  border: 1px solid #d0d6e0;
+  background: #fff;
+  flex: 1 1 auto;
+}
+.fsm-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  justify-content: center;
+}
+.fsm-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  border: none;
+  background: #0052cc;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s ease-in-out;
+  white-space: nowrap;
+}
+.fsm-button svg {
+  height: 1.2em;
+  width: auto;
+  flex-shrink: 0;
+}
+.fsm-button:disabled,
+.fsm-button-disabled {
+  cursor: not-allowed;
+  background: #cbd5f5;
+  color: #49526f;
+}
+.fsm-button:not(:disabled):hover {
+  background: #0a66e6;
+}
+.fsm-add-all,
+.fsm-add-selected {
+  justify-content: flex-end;
+}
+.fsm-remove-selected,
+.fsm-remove-all {
+  justify-content: flex-start;
+}
+@media (max-width: 640px) {
+  .filtered-select-multiple {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .fsm-controls {
+    flex-direction: row;
+    justify-content: center;
+  }
+}
+`;
+
+let defaultCssInjected = false;
+
+function injectDefaultCSS(doc) {
+  if (defaultCssInjected) return;
+  const style = doc.createElement("style");
+  style.setAttribute("data-fsm-default-theme", "");
+  style.textContent = DEFAULT_CSS;
+  doc.head.appendChild(style);
+  defaultCssInjected = true;
+}
 
 /**
  * Transform a native <select multiple> element into a dual-list transfer widget.
- * 
+ *
  * Usage:
  *   import { FilteredSelectMultiple } from "filtered-select-multiple-widget";
  *   const widget = new FilteredSelectMultiple(selectElement, options);
  */
 export class FilteredSelectMultiple {
+  /** @type {AbortController} – used to clean up all event listeners on destroy */
+  #abortController = new AbortController();
+
   constructor(selectElement, options = {}) {
-    // Validate
     if (!(selectElement instanceof HTMLSelectElement) || !selectElement.multiple) {
       throw new Error("FilteredSelectMultiple requires a <select multiple> element");
     }
 
     this.selectElement = selectElement;
     this.doc = selectElement.ownerDocument;
-    
-    // Parse options
+
+    // Merge the provided theme on top of defaults so missing keys are filled.
+    this.theme = { ...defaultTheme, ...(options.theme ?? {}) };
+
+    // Always inject default CSS — its .fsm-* selectors won't collide with
+    // framework themes that use their own class names.
+    injectDefaultCSS(this.doc);
+
     const optionCount = selectElement.options.length;
     this.showFilter = options.showFilter ?? true;
     this.filterMatchMode = options.filterMatchMode ?? "contains";
     this.size = options.size ?? (selectElement.size || Math.min(Math.max(optionCount, 4), 12));
     this.preserveSelectionOrder = options.preserveSelectionOrder ?? false;
-    this.theme = { ...defaultTheme, ...options.theme };
-    
-    // Parse text options
+
+    // Text / labels
     const textDefaults = {
       availableLabel: "Available",
       chosenLabel: "Chosen",
@@ -36,10 +147,12 @@ export class FilteredSelectMultiple {
       removeAll: "Remove all",
     };
     this.text = { ...textDefaults, ...(options.text || {}) };
-    
-    // Auto-detect labels from <label> element if defaults are used
-    if (this.text.availableLabel === textDefaults.availableLabel && 
-        this.text.chosenLabel === textDefaults.chosenLabel) {
+
+    // Auto-detect labels from an associated <label> element
+    if (
+      this.text.availableLabel === textDefaults.availableLabel &&
+      this.text.chosenLabel === textDefaults.chosenLabel
+    ) {
       const label = this.doc.querySelector(`label[for="${selectElement.id}"]`);
       if (label) {
         const baseLabel = label.textContent.trim();
@@ -47,42 +160,43 @@ export class FilteredSelectMultiple {
         this.text.chosenLabel = `Chosen ${baseLabel}`;
       }
     }
-    
-    // Set filter placeholder defaults
+
     const fallbackFilter = options.text?.filterPlaceholder ?? textDefaults.filterPlaceholder;
     this.text.availableFilterPlaceholder = this.text.availableFilterPlaceholder ?? fallbackFilter;
     this.text.chosenFilterPlaceholder = this.text.chosenFilterPlaceholder ?? fallbackFilter;
-    
-    // State
-    this.options = new Map(); // key -> {index, value, label, disabled, dataset, title, original}
+
+    // Internal state
+    this.options = new Map();
     this.available = [];
     this.chosen = [];
-    
-    // UI elements
+
+    // UI element references
     this.container = null;
     this.availableSelect = null;
     this.chosenSelect = null;
     this.availableFilter = null;
     this.chosenFilter = null;
+    this.availableCounter = null;
+    this.chosenCounter = null;
     this.buttons = {};
-    
+
+    // Filter debounce timer ids
+    this._filterTimers = { available: 0, chosen: 0 };
+
     this._init();
   }
 
+  // ---------------------------------------------------------------------------
+  // Initialisation
+  // ---------------------------------------------------------------------------
+
   _init() {
-    // Build state from original select
     this._buildState();
-    
-    // Hide original select
     this.selectElement.dataset.filteredSelectMultiple = "true";
     this.previousDisplay = this.selectElement.style.display;
     this.selectElement.style.display = "none";
-    
-    // Create placeholder comment for restoring position
     this.placeholder = this.doc.createComment("filtered-select-multiple");
     this.selectElement.parentNode.insertBefore(this.placeholder, this.selectElement);
-    
-    // Build and render UI
     this._buildUI();
     this._attachEvents();
     this._render();
@@ -90,8 +204,7 @@ export class FilteredSelectMultiple {
 
   _buildState() {
     const options = Array.from(this.selectElement.options);
-    const orderKeys = [];
-    
+
     options.forEach((option, index) => {
       const key = `fsm-${index}`;
       this.options.set(key, {
@@ -104,16 +217,14 @@ export class FilteredSelectMultiple {
         title: option.title,
         original: option,
       });
-      
-      orderKeys.push(key);
+
       if (option.selected) {
         this.chosen.push(key);
       } else {
         this.available.push(key);
       }
     });
-    
-    // Sort by original order
+
     this._sortByIndex(this.available);
     if (!this.preserveSelectionOrder) {
       this._sortByIndex(this.chosen);
@@ -122,18 +233,20 @@ export class FilteredSelectMultiple {
 
   _sortByIndex(keys) {
     keys.sort((a, b) => {
-      const aIndex = this.options.get(a)?.index ?? Number.MAX_SAFE_INTEGER;
-      const bIndex = this.options.get(b)?.index ?? Number.MAX_SAFE_INTEGER;
-      return aIndex - bIndex;
+      const ai = this.options.get(a)?.index ?? Number.MAX_SAFE_INTEGER;
+      const bi = this.options.get(b)?.index ?? Number.MAX_SAFE_INTEGER;
+      return ai - bi;
     });
   }
 
+  // ---------------------------------------------------------------------------
+  // UI construction
+  // ---------------------------------------------------------------------------
+
   _buildUI() {
-    // Main container
     this.container = this.doc.createElement("div");
     this.container.className = this.theme.container;
-    
-    // Available pane
+
     const availablePane = this._createPane({
       type: "available",
       label: this.text.availableLabel,
@@ -141,11 +254,10 @@ export class FilteredSelectMultiple {
     });
     this.availableSelect = availablePane.select;
     this.availableFilter = availablePane.filter;
-    
-    // Controls (buttons)
+    this.availableCounter = availablePane.counter;
+
     const controls = this._createControls();
-    
-    // Chosen pane
+
     const chosenPane = this._createPane({
       type: "chosen",
       label: this.text.chosenLabel,
@@ -153,8 +265,8 @@ export class FilteredSelectMultiple {
     });
     this.chosenSelect = chosenPane.select;
     this.chosenFilter = chosenPane.filter;
-    
-    // Assemble
+    this.chosenCounter = chosenPane.counter;
+
     this.container.append(availablePane.column, controls, chosenPane.column);
     this.placeholder.parentNode.insertBefore(this.container, this.placeholder);
   }
@@ -162,14 +274,28 @@ export class FilteredSelectMultiple {
   _createPane({ type, label, filterPlaceholder }) {
     const column = this.doc.createElement("div");
     const isAvailable = type === "available";
-    column.className = this.theme.column + " " + (isAvailable ? this.theme.availableColumn : this.theme.chosenColumn);
-    
-    // Label
+    column.className =
+      this.theme.column + " " +
+      (isAvailable ? this.theme.availableColumn : this.theme.chosenColumn);
+
+    // Unique ids for aria relationships
+    const labelId = `fsm-label-${type}-${Date.now()}`;
+
+    // Label + counter
     const labelEl = this.doc.createElement("div");
     labelEl.className = this.theme.label;
-    labelEl.textContent = label;
+    labelEl.id = labelId;
+
+    const labelText = this.doc.createTextNode(label + " ");
+    labelEl.appendChild(labelText);
+
+    const counter = this.doc.createElement("span");
+    counter.className = this.theme.counter;
+    counter.setAttribute("aria-live", "polite");
+    labelEl.appendChild(counter);
+
     column.appendChild(labelEl);
-    
+
     // Filter input (optional)
     let filter = null;
     if (this.showFilter) {
@@ -178,110 +304,105 @@ export class FilteredSelectMultiple {
       filter.className = this.theme.filter;
       filter.placeholder = filterPlaceholder;
       filter.dataset.paneType = type;
+      filter.setAttribute("aria-label", `${filterPlaceholder} ${label}`);
       column.appendChild(filter);
     }
-    
+
     // Select element
     const select = this.doc.createElement("select");
     select.multiple = true;
     select.size = this.size;
     select.className = this.theme.select;
     select.dataset.paneType = type;
+    select.setAttribute("aria-labelledby", labelId);
     column.appendChild(select);
-    
-    return { column, select, filter };
+
+    return { column, select, filter, counter };
   }
 
   _createControls() {
     const column = this.doc.createElement("div");
     column.className = this.theme.controls;
-    
-    const icons = {
-      addAll: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="height: 1.2em;">
-  <path stroke-linecap="round" stroke-linejoin="round" d="m5.25 4.5 7.5 7.5-7.5 7.5m6-15 7.5 7.5-7.5 7.5" />
-</svg>`,
-      addSelected: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="height: 1.2em;">
-  <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-</svg>`,
-      removeSelected: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="height: 1.2em;">
-  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
-</svg>`,
-      removeAll: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="height: 1.2em;">
-  <path stroke-linecap="round" stroke-linejoin="round" d="m18.75 4.5-7.5 7.5 7.5 7.5m-6-15L5.25 12l7.5 7.5" />
-</svg>`,
-    };
-    
-    const buttons = [
+    column.setAttribute("role", "group");
+    column.setAttribute("aria-label", "Transfer controls");
+
+    const buttonDefs = [
       { action: "addAll", label: this.text.addAll, icon: icons.addAll },
       { action: "addSelected", label: this.text.addSelected, icon: icons.addSelected },
       { action: "removeSelected", label: this.text.removeSelected, icon: icons.removeSelected },
       { action: "removeAll", label: this.text.removeAll, icon: icons.removeAll },
     ];
-    
-    buttons.forEach(({ action, label, icon }) => {
+
+    buttonDefs.forEach(({ action, label, icon }) => {
       const button = this.doc.createElement("button");
       button.type = "button";
-      const specificClass = this.theme[`button_${action}`] || "";
-      button.className = (this.theme.button + " " + specificClass).trim();
-      
+      const actionKey = `button${action.charAt(0).toUpperCase()}${action.slice(1)}`;
+      const actionClass = this.theme[actionKey] || "";
+      button.className = (this.theme.button + " " + actionClass).trim();
+      button.setAttribute("aria-label", label);
+
       const isRemove = action.startsWith("remove");
-      const svgClass = this.theme.button_svg ? ` class="${this.theme.button_svg}"` : '';
-      const modifiedIcon = icon.replace('<svg', `<svg${svgClass}`);
-      button.innerHTML = isRemove ? `${modifiedIcon} ${label}` : `${label} ${modifiedIcon}`;
+      button.innerHTML = isRemove ? `${icon} ${label}` : `${label} ${icon}`;
       button.dataset.action = action;
-      
       this.buttons[action] = button;
       column.appendChild(button);
     });
-    
+
     return column;
   }
 
+  // ---------------------------------------------------------------------------
+  // Events
+  // ---------------------------------------------------------------------------
+
   _attachEvents() {
-    // Filter input events
+    const signal = this.#abortController.signal;
+
     if (this.availableFilter) {
-      this.availableFilter.addEventListener("input", () => this._renderPane("available"));
+      this.availableFilter.addEventListener("input", () => this._debouncedRender("available"), { signal });
     }
     if (this.chosenFilter) {
-      this.chosenFilter.addEventListener("input", () => this._renderPane("chosen"));
+      this.chosenFilter.addEventListener("input", () => this._debouncedRender("chosen"), { signal });
     }
-    
-    // Selection change events
-    this.availableSelect.addEventListener("change", () => this._updateButtons());
-    this.chosenSelect.addEventListener("change", () => this._updateButtons());
-    
-    // Double-click to move
+
+    this.availableSelect.addEventListener("change", () => this._updateButtons(), { signal });
+    this.chosenSelect.addEventListener("change", () => this._updateButtons(), { signal });
+
     this.availableSelect.addEventListener("dblclick", () => {
-      if (!this.availableSelect.disabled) {
-        this._moveSelected("available", "chosen");
-      }
-    });
+      if (!this.availableSelect.disabled) this._moveSelected("available", "chosen");
+    }, { signal });
     this.chosenSelect.addEventListener("dblclick", () => {
-      if (!this.chosenSelect.disabled) {
-        this._moveSelected("chosen", "available");
-      }
-    });
-    
-    // Button clicks
+      if (!this.chosenSelect.disabled) this._moveSelected("chosen", "available");
+    }, { signal });
+
+    // Keyboard shortcut: Enter to transfer selected items
+    this.availableSelect.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); this._moveSelected("available", "chosen"); }
+    }, { signal });
+    this.chosenSelect.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); this._moveSelected("chosen", "available"); }
+    }, { signal });
+
     Object.entries(this.buttons).forEach(([action, button]) => {
       button.addEventListener("click", () => {
         switch (action) {
-          case "addAll":
-            this._moveAll("available", "chosen");
-            break;
-          case "addSelected":
-            this._moveSelected("available", "chosen");
-            break;
-          case "removeSelected":
-            this._moveSelected("chosen", "available");
-            break;
-          case "removeAll":
-            this._moveAll("chosen", "available");
-            break;
+          case "addAll": this._moveAll("available", "chosen"); break;
+          case "addSelected": this._moveSelected("available", "chosen"); break;
+          case "removeSelected": this._moveSelected("chosen", "available"); break;
+          case "removeAll": this._moveAll("chosen", "available"); break;
         }
-      });
+      }, { signal });
     });
   }
+
+  _debouncedRender(type) {
+    clearTimeout(this._filterTimers[type]);
+    this._filterTimers[type] = setTimeout(() => this._renderPane(type), 120);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Rendering
+  // ---------------------------------------------------------------------------
 
   _render() {
     this._renderPane("available");
@@ -292,111 +413,112 @@ export class FilteredSelectMultiple {
   _renderPane(type) {
     const select = type === "available" ? this.availableSelect : this.chosenSelect;
     const filter = type === "available" ? this.availableFilter : this.chosenFilter;
+    const counter = type === "available" ? this.availableCounter : this.chosenCounter;
     const keys = type === "available" ? this.available : this.chosen;
-    
-    // Get filter term
     const term = filter ? filter.value.trim().toLowerCase() : "";
-    
-    // Preserve selection
+
+    // Preserve selection across re-renders
     const previousSelection = new Set(
-      Array.from(select.selectedOptions, opt => opt.dataset.key)
+      Array.from(select.selectedOptions, (opt) => opt.dataset.key)
     );
-    
-    // Clear and rebuild
-    select.innerHTML = "";
-    
-    keys.forEach(key => {
+
+    const fragment = this.doc.createDocumentFragment();
+    let visibleCount = 0;
+
+    keys.forEach((key) => {
       const meta = this.options.get(key);
       if (!meta) return;
-      
-      // Apply filter
-      if (term && !this._passesFilter(meta.label, term)) {
-        return;
-      }
-      
+      if (term && !this._passesFilter(meta.label, term)) return;
+
+      visibleCount++;
       const option = this.doc.createElement("option");
       option.value = meta.value;
       option.textContent = meta.label;
       option.dataset.key = key;
       option.disabled = meta.disabled;
-      
-      if (meta.title) {
-        option.title = meta.title;
-      }
-      
+      if (meta.title) option.title = meta.title;
       Object.entries(meta.dataset).forEach(([attr, value]) => {
         option.dataset[attr] = value;
       });
-      
-      if (previousSelection.has(key)) {
-        option.selected = true;
-      }
-      
-      select.appendChild(option);
+      if (previousSelection.has(key)) option.selected = true;
+      fragment.appendChild(option);
     });
+
+    select.replaceChildren(fragment);
+
+    // Update counter
+    if (counter) {
+      const total = keys.length;
+      counter.textContent = term
+        ? `(${visibleCount} / ${total})`
+        : `(${total})`;
+    }
+
+    this._updateButtons();
   }
 
   _passesFilter(label, term) {
     if (!term) return true;
-    
     const haystack = label.toLowerCase();
-    
-    if (this.filterMatchMode === "startsWith") {
-      return haystack.startsWith(term);
-    }
-    
-    // "contains" mode - all tokens must match
+    if (this.filterMatchMode === "startsWith") return haystack.startsWith(term);
+    // "contains" mode – every whitespace-separated token must match
     const tokens = term.split(/\s+/).filter(Boolean);
-    return tokens.every(token => haystack.includes(token));
+    return tokens.every((token) => haystack.includes(token));
   }
 
+  // ---------------------------------------------------------------------------
+  // Transfer logic
+  // ---------------------------------------------------------------------------
+
   _getSelectedKeys(select) {
-    return Array.from(select.selectedOptions, opt => opt.dataset.key);
+    return Array.from(select.selectedOptions, (opt) => opt.dataset.key);
   }
 
   _moveSelected(fromType, toType) {
     const fromSelect = fromType === "available" ? this.availableSelect : this.chosenSelect;
-    const keys = this._getSelectedKeys(fromSelect);
-    if (keys.length > 0) {
-      this._transfer(keys, fromType, toType);
-    }
+    const keys = this._getSelectedKeys(fromSelect).filter((key) => {
+      const meta = this.options.get(key);
+      return meta && !meta.disabled;
+    });
+    if (keys.length > 0) this._transfer(keys, fromType, toType);
   }
 
   _moveAll(fromType, toType) {
-    const keys = fromType === "available" ? [...this.available] : [...this.chosen];
-    if (keys.length > 0) {
-      this._transfer(keys, fromType, toType);
-    }
+    const source = fromType === "available" ? this.available : this.chosen;
+    const keys = source.filter((key) => {
+      const meta = this.options.get(key);
+      return meta && !meta.disabled;
+    });
+    if (keys.length > 0) this._transfer(keys, fromType, toType);
   }
 
   _transfer(keys, fromType, toType) {
     const from = fromType === "available" ? this.available : this.chosen;
     const to = toType === "available" ? this.available : this.chosen;
-    
     const keySet = new Set(keys);
-    
+
     // Remove from source
-    const remaining = from.filter(key => !keySet.has(key));
+    const remaining = from.filter((key) => !keySet.has(key));
     from.splice(0, from.length, ...remaining);
-    
+
     // Add to target
     to.push(...keys);
-    
+
     // Sort
     this._sortByIndex(from);
     if (!this.preserveSelectionOrder || toType === "available") {
       this._sortByIndex(to);
     }
-    
-    // Update and notify
-    this._render();
+
+    // Sync state to original <select> FIRST, then render, then notify.
     this._syncToOriginal();
+    this._render();
     this._dispatchChange();
   }
 
   _syncToOriginal() {
     const chosenSet = new Set(this.chosen);
-    this.options.forEach(meta => {
+    this.options.forEach((meta) => {
       meta.original.selected = chosenSet.has(meta.key);
     });
   }
@@ -406,12 +528,16 @@ export class FilteredSelectMultiple {
     this.selectElement.dispatchEvent(event);
   }
 
+  // ---------------------------------------------------------------------------
+  // Button state management
+  // ---------------------------------------------------------------------------
+
   _updateButtons() {
     const hasAvailableSelection = this.availableSelect.selectedOptions.length > 0;
     const hasChosenSelection = this.chosenSelect.selectedOptions.length > 0;
-    const hasAvailableItems = this.available.length > 0;
-    const hasChosenItems = this.chosen.length > 0;
-    
+    const hasAvailableItems = this.available.some((k) => !this.options.get(k)?.disabled);
+    const hasChosenItems = this.chosen.some((k) => !this.options.get(k)?.disabled);
+
     this._setButtonState("addSelected", !hasAvailableSelection);
     this._setButtonState("removeSelected", !hasChosenSelection);
     this._setButtonState("addAll", !hasAvailableItems);
@@ -424,21 +550,23 @@ export class FilteredSelectMultiple {
 
     button.disabled = disabled;
 
-    // Rebuild className from scratch to avoid classList issues with spaces
     const baseClasses = this.theme.button.split(/\s+/).filter(Boolean);
-    const actionClasses = (this.theme[`button_${action}`] || '').split(/\s+/).filter(Boolean);
-    const disabledClasses = (this.theme.buttonDisabled || '').split(/\s+/).filter(Boolean);
+    const actionKey = `button${action.charAt(0).toUpperCase()}${action.slice(1)}`;
+    const actionClasses = (this.theme[actionKey] || "").split(/\s+/).filter(Boolean);
+    const disabledClasses = (this.theme.buttonDisabled || "").split(/\s+/).filter(Boolean);
 
-    let finalClasses = [...baseClasses, ...actionClasses];
-    if (disabled) {
-      finalClasses.push(...disabledClasses);
-    }
-
-    button.className = [...new Set(finalClasses)].join(' ');
+    const finalClasses = [...baseClasses, ...actionClasses];
+    if (disabled) finalClasses.push(...disabledClasses);
+    button.className = [...new Set(finalClasses)].join(" ");
   }
 
-  /** Revert the widget and show the original select element */
+  // ---------------------------------------------------------------------------
+  // Public API
+  // ---------------------------------------------------------------------------
+
+  /** Revert the widget and restore the original <select> element. */
   destroy() {
+    this.#abortController.abort();
     this.container.remove();
     this.selectElement.style.display = this.previousDisplay;
     this.selectElement.removeAttribute("data-filtered-select-multiple");

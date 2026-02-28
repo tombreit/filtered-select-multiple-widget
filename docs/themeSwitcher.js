@@ -96,7 +96,7 @@ export class ThemeSwitcher {
      */
     async loadScripts(scripts = []) {
         for (const scriptConfig of scripts) {
-            await new Promise((resolve, reject) => {
+            await new Promise((resolve) => {
                 const script = document.createElement('script');
                 script.setAttribute('data-theme-resource', 'true');
 
@@ -123,7 +123,7 @@ export class ThemeSwitcher {
      */
     async loadStylesheets(stylesheets = []) {
         for (const cssConfig of stylesheets) {
-            await new Promise((resolve, reject) => {
+            await new Promise((resolve) => {
                 const link = document.createElement('link');
                 link.rel = 'stylesheet';
                 link.setAttribute('data-theme-resource', 'true');

@@ -1,7 +1,7 @@
 {
     "default": {
         "name": "Default",
-        "description": "No theme: Dependency-free styling with minimal CSS (bring your onw)",
+        "description": "No theme: Dependency-free styling with minimal CSS (bring your own)",
         "themeModule": "defaultTheme"
     },
     "bootstrap5": {

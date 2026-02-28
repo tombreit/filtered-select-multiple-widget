@@ -122,70 +122,6 @@
       font-family: 'Courier New', monospace;
       font-size: 0.875rem;
     }
-
-    /* Default widget styles */
-    .filtered-select-multiple {
-      display: flex;
-      gap: 1rem;
-      align-items: center;
-      justify-content: flex-start;
-      flex-wrap: wrap;
-    }
-
-    .fsm-column {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      min-width: 220px;
-    }
-
-    .fsm-label {
-      font-weight: 600;
-    }
-
-    .fsm-filter {
-      padding: 0.5rem;
-      border-radius: 6px;
-      border: 1px solid #d0d6e0;
-    }
-
-    .fsm-select {
-      min-width: 220px;
-      padding: 0.25rem;
-      border-radius: 6px;
-      border: 1px solid #d0d6e0;
-      background: #fff;
-    }
-
-    .fsm-controls {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-
-    .fsm-button {
-      padding: 0.5rem 0.75rem;
-      border-radius: 6px;
-      border: none;
-      background: #0052cc;
-      color: #fff;
-      cursor: pointer;
-      transition: background 0.2s ease-in-out;
-    }
-
-    .fsm-button:disabled {
-      cursor: not-allowed;
-      background: #cbd5f5;
-      color: #49526f;
-    }
-
-    .fsm-button:not(:disabled):hover {
-      background: #0a66e6;
-    }
-
-    .fsm-button svg {
-      display: inline-block;
-    }
   </style>
   <style id="theme-styles"></style>
 </head>
@@ -202,19 +138,20 @@
   <h2>Motivation</h2>
 
   <p>
-    I had been missing the beautiful and, above all, practical Django admin widget `filter-horizontal` outside of the
+    I had been missing the beautiful and, above all, practical Django admin widget <code>filter-horizontal</code> outside of the
     Django Admin interface for quite some time.
   </p>
 
   <h2>Links</h2>
   <ul>
     <li><a href="https://github.com/tombreit/filtered-select-multiple-widget/blob/main/README.md">Docs</a></li>
-    <li><a href="https://github.com/tombreit/filtered-select-multiple-widget">Repository <code>https://github.com/tombreit/filtered-select-multiple-widget</code></a></li>
-    <li><a href="https://tombreit.github.io/filtered-select-multiple-widget/">Demo <code>https://tombreit.github.io/filtered-select-multiple-widget/</code> (you are here)</a></li>
+    <li><a href="https://github.com/tombreit/filtered-select-multiple-widget">Repository</a></li>
+    <li><a href="https://www.npmjs.com/package/filtered-select-multiple-widget">NPM package</a></li>
+    <li><a href="https://tombreit.github.io/filtered-select-multiple-widget/">Demo (you are here)</a></li>
   </ul>
 
   <!-- Theme Navigation -->
-  <nav class="theme-nav">
+  <nav class="theme-nav" aria-label="Theme selector">
     <div class="theme-nav-container">
       <span class="theme-nav-label">Theme:</span>
       <button class="theme-btn active" data-theme="default">Default</button>
@@ -227,8 +164,7 @@
   <!-- Demo Content -->
   <div class="demo-container" id="demo-container">
     <div class="demo-card" id="demo-card">
-      <p class="description" id="demo-description">
-      </p>
+      <p class="description" id="demo-description"></p>
 
       <label for="demo-select" class="fsm-label">Permissions</label>
       <select id="demo-select" name="demo-select" multiple size="12">

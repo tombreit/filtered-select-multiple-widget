@@ -1,6 +1,6 @@
 {
   "name": "filtered-select-multiple-widget",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "ES module implementation of Django's FilteredSelectMultiple widget.",
   "license": "MIT",
   "author": {
@@ -28,7 +28,13 @@
   },
   "keywords": [
     "widget",
-    "multiselect"
+    "multiselect",
+    "select",
+    "multiple",
+    "dual-list",
+    "filter",
+    "django",
+    "transfer-list"
   ],
   "exports": {
     ".": {
@@ -40,10 +46,10 @@
     "http-server": "^14.1.1"
   },
   "scripts": {
-    "test": "node --check src/index.js && node --check src/FilteredSelectMultiple.js && node --check src/themes.js",
-    "pre-demo": "ln -sf ../src docs/src",
+    "test": "node --check src/index.js && node --check src/FilteredSelectMultiple.js && node --check src/themes.js && node --check src/icons.js",
+    "predemo": "ln -sf ../src docs/src",
     "demo": "http-server docs/ -p 8000 -o",
-    "pre-ghpages": "rm -rf docs/src",
+    "preghpages": "rm -rf docs/src",
     "ghpages": "cp -r src docs/src"
   }
 }

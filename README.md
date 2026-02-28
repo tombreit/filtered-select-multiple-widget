@@ -27,10 +27,14 @@ The Django widget is a thousand times better than mine. But I hope to gradually 
 
 - Zero dependencies and ES module friendly.
 - Works with any native `<select multiple>` element.
-- Optional client-side filtering of the available choices.
-- Keyboard friendly and form-ready (synced back to the original select element).
+- Optional client-side filtering of the available choices (with debounce).
+- Keyboard friendly: select items and press Enter to transfer. Form-ready (synced back to the original select element).
+- Ships default CSS — no extra stylesheet needed for out-of-the-box styling.
 - Integrates with Bootstrap 5, DaisyUI, and Tailwind CSS (see live demo with theme switcher).
 - Automatically detects pane labels from associated `<label>` elements.
+- Items count indicator on each pane.
+- Accessible: `aria-labelledby`, `aria-label`, `aria-live` regions.
+- Disabled `<option>` elements are respected and excluded from bulk transfers.
 
 ## Demo
 
@@ -44,7 +48,7 @@ The demo includes a theme switcher to showcase integration with Bootstrap 5, Dai
 ## Installation
 
 ```bash
-npm install git+https://github.com/tombreit/filtered-select-multiple-widget.git
+npm install filtered-select-multiple-widget
 ```
 
 ## Usage
@@ -68,12 +72,17 @@ const widget = new FilteredSelectMultiple(select);
 
 | Option | Type | Default | Description |
 | ------ | ---- | ------- | ----------- |
-| `showFilter` | `boolean` | `true` | Toggle the search box above the available list. |
-| `filterMatchMode` | `'contains' \| 'startsWith'` | `'contains'` | How filtering behaves. |
-| `size` | `number` | `select.size \|\| clamp(optionCount)` | Number of visible rows for each list. |
+| `showFilter` | `boolean` | `true` | Toggle the search box above each list. |
+| `filterMatchMode` | `'contains' \| 'startsWith'` | `'contains'` | How filtering behaves. `'contains'` supports multiple space-separated tokens. |
+| `size` | `number` | `select.size \|\| clamp(optionCount, 4, 12)` | Number of visible rows for each list. |
 | `preserveSelectionOrder` | `boolean` | `false` | Keep the order items were added in the chosen list rather than the original option order. |
 | `text` | `object` | see defaults | Override UI copy (`availableLabel`, `chosenLabel`, `filterPlaceholder`, `availableFilterPlaceholder`, `chosenFilterPlaceholder`, `addAll`, `addSelected`, `removeSelected`, `removeAll`). If `availableLabel` and `chosenLabel` are not provided, the widget will attempt to auto-detect them from an associated `<label>` element. |
-| `theme` | `Theme` | `defaultTheme` | CSS theme configuration for styling framework integration. |
+| `theme` | `object` | `defaultTheme` | CSS theme configuration for styling framework integration. |
+
+### Keyboard Support
+
+- **Enter** on either select list: transfers the currently selected items.
+- **Double-click** on an option: transfers that single item.
 
 ### Theming
 
@@ -99,32 +108,40 @@ new FilteredSelectMultiple(select, { theme: tailwindTheme });
 
 #### Custom Themes
 
-```js
-import { Theme } from "filtered-select-multiple-widget";
+A theme is a plain object mapping element roles to CSS class strings. Any keys you omit are filled in from `defaultTheme`:
 
-const customTheme = new Theme({
+```js
+const customTheme = {
   container: "my-widget-container",
   button: "my-button-class",
-  buttonAddSelected: "my-button-class my-primary-button",
+  buttonAddSelected: "my-primary-button",
   filter: "my-input-class",
   select: "my-select-class",
-  // ... customize any element
-});
+  // ... only override what you need
+};
 
 new FilteredSelectMultiple(select, { theme: customTheme });
 ```
 
-#### Available Theme Elements
+#### Available Theme Keys
 
-- `container` - Main widget wrapper
-- `column`, `availableColumn`, `chosenColumn` - Pane containers  
-- `label` - Pane labels
-- `filter` - Search input fields
-- `select` - Multi-select elements
-- `controls` - Button container
-- `button`, `buttonAddAll`, `buttonAddSelected`, `buttonRemoveSelected`, `buttonRemoveAll` - Control buttons
-- `buttonDisabled` - Disabled button modifier
-- `button_svg` - Button SVG icon
+| Key | Element |
+| --- | ------- |
+| `container` | Main widget wrapper |
+| `column` | Pane column |
+| `availableColumn` | Available pane column modifier |
+| `chosenColumn` | Chosen pane column modifier |
+| `label` | Pane labels |
+| `counter` | Item count indicator inside labels |
+| `filter` | Search input fields |
+| `select` | Multi-select elements |
+| `controls` | Button container |
+| `button` | Base button class (applied to all buttons) |
+| `buttonAddAll` | "Add all" button |
+| `buttonAddSelected` | "Add selected" button |
+| `buttonRemoveSelected` | "Remove selected" button |
+| `buttonRemoveAll` | "Remove all" button |
+| `buttonDisabled` | Disabled button modifier |
 
 ### Destroying the widget
 
@@ -132,7 +149,11 @@ new FilteredSelectMultiple(select, { theme: customTheme });
 widget.destroy();
 ```
 
-The original `<select>` is restored and remains in sync with user selections.
+The original `<select>` is restored and all event listeners are cleaned up.
+
+## Note on `<optgroup>`
+
+The widget currently flattens `<optgroup>` structures — all options are displayed in a single flat list regardless of their original grouping. Grouped display is not yet supported.
 
 ## Third-Party Assets
 
