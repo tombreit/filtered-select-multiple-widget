@@ -1,6 +1,6 @@
 {
   "name": "filtered-select-multiple-widget",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "ES module implementation of Django's FilteredSelectMultiple widget.",
   "license": "MIT",
   "author": {
