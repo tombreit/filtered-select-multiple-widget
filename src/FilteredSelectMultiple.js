@@ -436,7 +436,10 @@ export class FilteredSelectMultiple {
       option.textContent = meta.label;
       option.dataset.key = key;
       option.disabled = meta.disabled;
-      if (meta.title) option.title = meta.title;
+      // Always give every option a tooltip so long labels remain readable
+      // when a width-constrained parent truncates the visible text. Prefer an
+      // explicit title from the source markup, otherwise fall back to the label.
+      option.title = meta.title || meta.label;
       Object.entries(meta.dataset).forEach(([attr, value]) => {
         option.dataset[attr] = value;
       });
