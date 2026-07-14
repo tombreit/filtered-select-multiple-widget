@@ -47,7 +47,7 @@
   },
   "scripts": {
     "test": "node --check src/index.js && node --check src/FilteredSelectMultiple.js && node --check src/themes.js && node --check src/icons.js",
-    "predemo": "ln -sf ../src docs/src",
+    "predemo": "ln -sfn ../src docs/src",
     "demo": "http-server docs/ -p 8000 -o",
     "preghpages": "rm -rf docs/src",
     "ghpages": "cp -r src docs/src"
