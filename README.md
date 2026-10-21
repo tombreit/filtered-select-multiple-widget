@@ -96,7 +96,9 @@ If the original `<select>` is disabled when the widget is created, either by
 its own `disabled` attribute or by a disabled `<fieldset>` around it, the
 widget is read-only: all transfer buttons are disabled, and
 double-click and Enter do nothing. Both lists can still be scrolled and
-filtered, so long selections stay readable.
+filtered, so long selections stay readable. They get the `selectReadonly`
+theme class and `aria-readonly="true"`, so the read-only state is visible
+and announced by screen readers.
 
 ### Theming
 
@@ -149,6 +151,7 @@ new FilteredSelectMultiple(select, { theme: customTheme });
 | `counter` | Item count indicator inside labels |
 | `filter` | Search input fields |
 | `select` | Multi-select elements |
+| `selectReadonly` | Read-only multi-select modifier |
 | `controls` | Button container |
 | `button` | Base button class (applied to all buttons) |
 | `buttonAddAll` | "Add all" button |

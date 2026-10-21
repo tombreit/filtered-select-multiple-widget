@@ -40,6 +40,9 @@ const DEFAULT_CSS = `
   background: #fff;
   flex: 1 1 auto;
 }
+.fsm-select-readonly {
+  background: #f4f5f7;
+}
 .fsm-controls {
   display: flex;
   flex-direction: column;
@@ -320,6 +323,11 @@ export class FilteredSelectMultiple {
     select.className = this.theme.select;
     select.dataset.paneType = type;
     select.setAttribute("aria-labelledby", labelId);
+    if (this.disabled) {
+      const readonlyClasses = (this.theme.selectReadonly || "").split(/\s+/).filter(Boolean);
+      select.classList.add(...readonlyClasses);
+      select.setAttribute("aria-readonly", "true");
+    }
     column.appendChild(select);
 
     return { column, select, filter, counter };

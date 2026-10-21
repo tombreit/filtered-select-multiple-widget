@@ -50,6 +50,12 @@ test("an enabled select transfers items", () => {
 
   assert.deepEqual(selectedValues(select), ["0", "1", "2"]);
   assert.equal(changes.count, 1);
+
+  // No read-only cue on an editable widget.
+  [widget.availableSelect, widget.chosenSelect].forEach((list) => {
+    assert.equal(list.classList.contains("fsm-select-readonly"), false);
+    assert.equal(list.hasAttribute("aria-readonly"), false);
+  });
 });
 
 test("a disabled select gives a read-only widget", () => {
@@ -84,6 +90,12 @@ test("a disabled select gives a read-only widget", () => {
   // Filtering stays available so long lists remain readable.
   assert.equal(widget.availableFilter.disabled, false);
   assert.equal(widget.chosenFilter.disabled, false);
+
+  // Both lists show and announce the read-only state.
+  [widget.availableSelect, widget.chosenSelect].forEach((list) => {
+    assert.equal(list.classList.contains("fsm-select-readonly"), true);
+    assert.equal(list.getAttribute("aria-readonly"), "true");
+  });
 });
 
 test("a select inside a disabled fieldset gives a read-only widget", () => {
