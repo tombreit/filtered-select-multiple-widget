@@ -124,8 +124,9 @@ export class FilteredSelectMultiple {
     this.doc = selectElement.ownerDocument;
 
     // A disabled <select> makes the widget read-only: nothing can be moved,
-    // but both lists can still be scrolled and filtered.
-    this.disabled = selectElement.disabled;
+    // but both lists can still be scrolled and filtered. `:disabled` also
+    // matches a <select> inside a disabled <fieldset>.
+    this.disabled = selectElement.matches(":disabled");
 
     // Merge the provided theme on top of defaults so missing keys are filled.
     this.theme = { ...defaultTheme, ...(options.theme ?? {}) };

@@ -12,7 +12,7 @@ globalThis.HTMLSelectElement = window.HTMLSelectElement;
 globalThis.Event = window.Event;
 globalThis.AbortController = window.AbortController;
 
-function makeSelect({ disabled = false } = {}) {
+function makeSelect({ disabled = false, parent = document.body } = {}) {
   const select = document.createElement("select");
   select.multiple = true;
   select.disabled = disabled;
@@ -23,7 +23,7 @@ function makeSelect({ disabled = false } = {}) {
     option.selected = i === 1;
     select.appendChild(option);
   });
-  document.body.appendChild(select);
+  parent.appendChild(select);
   return select;
 }
 
@@ -84,4 +84,23 @@ test("a disabled select gives a read-only widget", () => {
   // Filtering stays available so long lists remain readable.
   assert.equal(widget.availableFilter.disabled, false);
   assert.equal(widget.chosenFilter.disabled, false);
+});
+
+test("a select inside a disabled fieldset gives a read-only widget", () => {
+  const fieldset = document.createElement("fieldset");
+  fieldset.disabled = true;
+  document.body.appendChild(fieldset);
+  const select = makeSelect({ parent: fieldset });
+  const changes = countChanges(select);
+  const widget = new FilteredSelectMultiple(select);
+
+  Object.entries(widget.buttons).forEach(([action, button]) => {
+    assert.equal(button.disabled, true, `${action} button should be disabled`);
+  });
+
+  widget.availableSelect.options[0].selected = true;
+  widget.availableSelect.dispatchEvent(new window.MouseEvent("dblclick"));
+
+  assert.deepEqual(selectedValues(select), ["1"]);
+  assert.equal(changes.count, 0);
 });
