@@ -43,10 +43,11 @@
     }
   },
   "devDependencies": {
-    "http-server": "^14.1.1"
+    "http-server": "^14.1.1",
+    "jsdom": "^30.1.3"
   },
   "scripts": {
-    "test": "node --check src/index.js && node --check src/FilteredSelectMultiple.js && node --check src/themes.js && node --check src/icons.js",
+    "test": "node --check src/index.js && node --check src/FilteredSelectMultiple.js && node --check src/themes.js && node --check src/icons.js && node --test test/*.test.js",
     "predemo": "ln -sfn ../src docs/src",
     "demo": "http-server docs/ -p 8000 -o",
     "preghpages": "rm -rf docs/src",

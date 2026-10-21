@@ -40,6 +40,7 @@ The Django widget is a thousand times better than mine. But I hope to gradually 
 - Items count indicator on each pane.
 - Accessible: `aria-labelledby`, `aria-label`, `aria-live` regions.
 - Disabled `<option>` elements are respected and excluded from bulk transfers.
+- A disabled `<select>` gives a read-only widget (see below).
 
 ## Demo
 
@@ -88,6 +89,13 @@ const widget = new FilteredSelectMultiple(select);
 
 - **Enter** on either select list: transfers the currently selected items.
 - **Double-click** on an option: transfers that single item.
+
+### Read-only
+
+If the original `<select>` has the `disabled` attribute when the widget is
+created, the widget is read-only: all transfer buttons are disabled, and
+double-click and Enter do nothing. Both lists can still be scrolled and
+filtered, so long selections stay readable.
 
 ### Theming
 

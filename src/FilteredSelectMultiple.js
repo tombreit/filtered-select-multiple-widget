@@ -123,6 +123,10 @@ export class FilteredSelectMultiple {
     this.selectElement = selectElement;
     this.doc = selectElement.ownerDocument;
 
+    // A disabled <select> makes the widget read-only: nothing can be moved,
+    // but both lists can still be scrolled and filtered.
+    this.disabled = selectElement.disabled;
+
     // Merge the provided theme on top of defaults so missing keys are filled.
     this.theme = { ...defaultTheme, ...(options.theme ?? {}) };
 
@@ -496,6 +500,8 @@ export class FilteredSelectMultiple {
   }
 
   _transfer(keys, fromType, toType) {
+    if (this.disabled) return;
+
     const from = fromType === "available" ? this.available : this.chosen;
     const to = toType === "available" ? this.available : this.chosen;
     const keySet = new Set(keys);
@@ -536,6 +542,11 @@ export class FilteredSelectMultiple {
   // ---------------------------------------------------------------------------
 
   _updateButtons() {
+    if (this.disabled) {
+      Object.keys(this.buttons).forEach((action) => this._setButtonState(action, true));
+      return;
+    }
+
     const hasAvailableSelection = this.availableSelect.selectedOptions.length > 0;
     const hasChosenSelection = this.chosenSelect.selectedOptions.length > 0;
     const hasAvailableItems = this.available.some((k) => !this.options.get(k)?.disabled);
