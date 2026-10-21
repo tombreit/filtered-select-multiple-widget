@@ -11,6 +11,10 @@ const { document } = window;
 globalThis.HTMLSelectElement = window.HTMLSelectElement;
 globalThis.Event = window.Event;
 globalThis.AbortController = window.AbortController;
+globalThis.MutationObserver = window.MutationObserver;
+
+// MutationObserver callbacks run asynchronously.
+const nextTick = () => new Promise((resolve) => setTimeout(resolve));
 
 function makeSelect({ disabled = false, parent = document.body } = {}) {
   const select = document.createElement("select");
@@ -115,4 +119,48 @@ test("a select inside a disabled fieldset gives a read-only widget", () => {
 
   assert.deepEqual(selectedValues(select), ["1"]);
   assert.equal(changes.count, 0);
+});
+
+test("toggling disabled later locks and unlocks the widget", async () => {
+  const select = makeSelect();
+  const changes = countChanges(select);
+  const widget = new FilteredSelectMultiple(select);
+
+  select.disabled = true;
+  await nextTick();
+
+  Object.entries(widget.buttons).forEach(([action, button]) => {
+    assert.equal(button.disabled, true, `${action} button should be disabled`);
+  });
+  assert.equal(widget.availableSelect.getAttribute("aria-readonly"), "true");
+  widget.availableSelect.options[0].selected = true;
+  widget.availableSelect.dispatchEvent(new window.MouseEvent("dblclick"));
+  assert.deepEqual(selectedValues(select), ["1"]);
+  assert.equal(changes.count, 0);
+
+  select.disabled = false;
+  await nextTick();
+
+  assert.equal(widget.availableSelect.hasAttribute("aria-readonly"), false);
+  assert.equal(widget.availableSelect.classList.contains("fsm-select-readonly"), false);
+  widget.buttons.addAll.click();
+  assert.deepEqual(selectedValues(select), ["0", "1", "2"]);
+  assert.equal(changes.count, 1);
+});
+
+test("toggling a surrounding fieldset locks and unlocks the widget", async () => {
+  const fieldset = document.createElement("fieldset");
+  document.body.appendChild(fieldset);
+  const select = makeSelect({ parent: fieldset });
+  const widget = new FilteredSelectMultiple(select);
+
+  fieldset.disabled = true;
+  await nextTick();
+  assert.equal(widget.buttons.addAll.disabled, true);
+  assert.equal(widget.chosenSelect.getAttribute("aria-readonly"), "true");
+
+  fieldset.disabled = false;
+  await nextTick();
+  assert.equal(widget.buttons.addAll.disabled, false);
+  assert.equal(widget.chosenSelect.hasAttribute("aria-readonly"), false);
 });

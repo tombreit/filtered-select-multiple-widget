@@ -92,9 +92,10 @@ const widget = new FilteredSelectMultiple(select);
 
 ### Read-only
 
-If the original `<select>` is disabled when the widget is created, either by
-its own `disabled` attribute or by a disabled `<fieldset>` around it, the
-widget is read-only: all transfer buttons are disabled, and
+If the original `<select>` is disabled, either by its own `disabled`
+attribute or by a disabled `<fieldset>` around it, the widget is read-only.
+The widget follows later changes, so toggling `disabled` locks or unlocks
+it. While read-only, all transfer buttons are disabled, and
 double-click and Enter do nothing. Both lists can still be scrolled and
 filtered, so long selections stay readable. They get the `selectReadonly`
 theme class and `aria-readonly="true"`, so the read-only state is visible

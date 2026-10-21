@@ -118,6 +118,9 @@ export class FilteredSelectMultiple {
   /** @type {AbortController} – used to clean up all event listeners on destroy */
   #abortController = new AbortController();
 
+  /** @type {MutationObserver} – follows `disabled` changes on the <select> and its fieldsets */
+  #disabledObserver = null;
+
   constructor(selectElement, options = {}) {
     if (!(selectElement instanceof HTMLSelectElement) || !selectElement.multiple) {
       throw new Error("FilteredSelectMultiple requires a <select multiple> element");
@@ -125,11 +128,6 @@ export class FilteredSelectMultiple {
 
     this.selectElement = selectElement;
     this.doc = selectElement.ownerDocument;
-
-    // A disabled <select> makes the widget read-only: nothing can be moved,
-    // but both lists can still be scrolled and filtered. `:disabled` also
-    // matches a <select> inside a disabled <fieldset>.
-    this.disabled = selectElement.matches(":disabled");
 
     // Merge the provided theme on top of defaults so missing keys are filled.
     this.theme = { ...defaultTheme, ...(options.theme ?? {}) };
@@ -207,6 +205,8 @@ export class FilteredSelectMultiple {
     this.selectElement.parentNode.insertBefore(this.placeholder, this.selectElement);
     this._buildUI();
     this._attachEvents();
+    this._observeDisabled();
+    this._updateDisabled();
     this._render();
   }
 
@@ -323,11 +323,6 @@ export class FilteredSelectMultiple {
     select.className = this.theme.select;
     select.dataset.paneType = type;
     select.setAttribute("aria-labelledby", labelId);
-    if (this.disabled) {
-      const readonlyClasses = (this.theme.selectReadonly || "").split(/\s+/).filter(Boolean);
-      select.classList.add(...readonlyClasses);
-      select.setAttribute("aria-readonly", "true");
-    }
     column.appendChild(select);
 
     return { column, select, filter, counter };
@@ -543,6 +538,40 @@ export class FilteredSelectMultiple {
   }
 
   // ---------------------------------------------------------------------------
+  // Read-only state
+  // ---------------------------------------------------------------------------
+
+  _observeDisabled() {
+    this.#disabledObserver = new MutationObserver(() => this._updateDisabled());
+    const observed = [this.selectElement];
+    for (let el = this.selectElement.parentElement; el; el = el.parentElement) {
+      if (el.tagName === "FIELDSET") observed.push(el);
+    }
+    observed.forEach((el) => {
+      this.#disabledObserver.observe(el, { attributes: true, attributeFilter: ["disabled"] });
+    });
+  }
+
+  _updateDisabled() {
+    // A disabled <select> makes the widget read-only: nothing can be moved,
+    // but both lists can still be scrolled and filtered. `:disabled` also
+    // matches a <select> inside a disabled <fieldset>.
+    this.disabled = this.selectElement.matches(":disabled");
+
+    const readonlyClasses = (this.theme.selectReadonly || "").split(/\s+/).filter(Boolean);
+    [this.availableSelect, this.chosenSelect].forEach((select) => {
+      readonlyClasses.forEach((cls) => select.classList.toggle(cls, this.disabled));
+      if (this.disabled) {
+        select.setAttribute("aria-readonly", "true");
+      } else {
+        select.removeAttribute("aria-readonly");
+      }
+    });
+
+    this._updateButtons();
+  }
+
+  // ---------------------------------------------------------------------------
   // Button state management
   // ---------------------------------------------------------------------------
 
@@ -586,6 +615,7 @@ export class FilteredSelectMultiple {
   /** Revert the widget and restore the original <select> element. */
   destroy() {
     this.#abortController.abort();
+    this.#disabledObserver.disconnect();
     this.container.remove();
     this.selectElement.style.display = this.previousDisplay;
     this.selectElement.removeAttribute("data-filtered-select-multiple");
