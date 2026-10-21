@@ -77,6 +77,17 @@
       color: #fff;
     }
 
+    .demo-toggle {
+      margin-left: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #374151;
+      cursor: pointer;
+    }
+
     /* Default theme styles */
     .demo-container {}
 
@@ -151,13 +162,17 @@
   </ul>
 
   <!-- Theme Navigation -->
-  <nav class="theme-nav" aria-label="Theme selector">
+  <nav class="theme-nav" aria-label="Demo options">
     <div class="theme-nav-container">
       <span class="theme-nav-label">Theme:</span>
       <button class="theme-btn active" data-theme="default">Default</button>
       <button class="theme-btn" data-theme="bootstrap5">Bootstrap 5</button>
       <button class="theme-btn" data-theme="tailwind">Tailwind CSS</button>
       <button class="theme-btn" data-theme="daisyui">DaisyUI</button>
+      <label class="demo-toggle">
+        <input type="checkbox" id="disabled-toggle" autocomplete="off">
+        Disabled (read-only)
+      </label>
     </div>
   </nav>
 

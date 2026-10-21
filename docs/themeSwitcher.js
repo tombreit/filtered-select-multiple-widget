@@ -224,10 +224,15 @@ export class ThemeSwitcher {
             ? `, {\n  theme: ${theme.themeModule}\n}`
             : '';
 
+        const select = document.querySelector('#demo-select');
+        const disabledBlock = select?.disabled
+            ? '\n\n// Read-only: the widget follows changes live\nselect.disabled = true;'
+            : '';
+
         codeEl.textContent = `import { FilteredSelectMultiple${themeImport} } from "filtered-select-multiple-widget";
 
 const select = document.querySelector("#demo-select");
-new FilteredSelectMultiple(select${optionBlock});`;
+new FilteredSelectMultiple(select${optionBlock});${disabledBlock}`;
     }
 
     /**
@@ -244,6 +249,15 @@ new FilteredSelectMultiple(select${optionBlock});`;
                 }
             });
         });
+
+        const disabledToggle = document.getElementById('disabled-toggle');
+        if (disabledToggle) {
+            disabledToggle.addEventListener('change', () => {
+                // No rebuild needed: the widget follows `disabled` on its <select> itself
+                document.querySelector('#demo-select').disabled = disabledToggle.checked;
+                this.updateCodeExample(this.themes[this.currentTheme]);
+            });
+        }
     }
 
     /**
