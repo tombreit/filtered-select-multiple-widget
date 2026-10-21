@@ -58,9 +58,11 @@ export const daisyUITheme = {
   column: "flex flex-col",
   availableColumn: "flex flex-col",
   chosenColumn: "flex flex-col",
-  label: "label label-text font-semibold mb-2",
-  filter: "input input-bordered input-sm mb-2 w-full",
-  select: "select select-bordered w-full flex-grow",
+  label: "label font-semibold mb-2",
+  filter: "input input-sm mb-2 w-full",
+  // daisyUI's .select is styled as a dropdown (appearance: base-select), which lays
+  // out <select multiple> options side by side; appearance-auto keeps a native listbox.
+  select: "select w-full flex-grow appearance-auto",
   selectReadonly: "bg-base-200",
   controls: "flex flex-col justify-center gap-2 px-4",
   button: "btn btn-sm inline-flex items-center gap-1",
