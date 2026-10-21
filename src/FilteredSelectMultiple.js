@@ -372,12 +372,8 @@ export class FilteredSelectMultiple {
     this.availableSelect.addEventListener("change", () => this._updateButtons(), { signal });
     this.chosenSelect.addEventListener("change", () => this._updateButtons(), { signal });
 
-    this.availableSelect.addEventListener("dblclick", () => {
-      if (!this.availableSelect.disabled) this._moveSelected("available", "chosen");
-    }, { signal });
-    this.chosenSelect.addEventListener("dblclick", () => {
-      if (!this.chosenSelect.disabled) this._moveSelected("chosen", "available");
-    }, { signal });
+    this.availableSelect.addEventListener("dblclick", () => this._moveSelected("available", "chosen"), { signal });
+    this.chosenSelect.addEventListener("dblclick", () => this._moveSelected("chosen", "available"), { signal });
 
     // Keyboard shortcut: Enter to transfer selected items
     this.availableSelect.addEventListener("keydown", (e) => {
