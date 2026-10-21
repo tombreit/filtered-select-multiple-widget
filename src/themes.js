@@ -63,7 +63,7 @@ export const daisyUITheme = {
   // daisyUI's .select is styled as a dropdown (appearance: base-select), which lays
   // out <select multiple> options side by side; appearance-auto keeps a native listbox.
   select: "select w-full flex-grow appearance-auto",
-  selectReadonly: "bg-base-200",
+  selectReadonly: "bg-base-300",
   controls: "flex flex-col justify-center gap-2 px-4",
   button: "btn btn-sm inline-flex items-center gap-1",
   buttonAddAll: "btn-outline btn-secondary justify-end",

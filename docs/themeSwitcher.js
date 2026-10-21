@@ -1,6 +1,9 @@
 /**
  * Theme Switcher for FilteredSelectMultiple Demo
  * Handles loading themes, applying theme resources, and managing widget instances
+ *
+ * Each theme gets a fresh page load (?theme=…&disabled=1): framework resets and
+ * Tailwind's runtime-injected styles cannot be cleanly removed once loaded.
  */
 
 import * as widgetExports from './src/index.js';
@@ -21,7 +24,17 @@ export class ThemeSwitcher {
      */
     async init() {
         await this.loadThemes();
-        await this.applyTheme('default');
+
+        const params = new URLSearchParams(location.search);
+        const themeKey = params.get('theme') in this.themes ? params.get('theme') : 'default';
+
+        // Disable before the widget is created, so it starts read-only
+        const disabled = params.get('disabled') === '1';
+        document.querySelector('#demo-select').disabled = disabled;
+        const disabledToggle = document.getElementById('disabled-toggle');
+        if (disabledToggle) disabledToggle.checked = disabled;
+
+        await this.applyTheme(themeKey);
         this.setupEventListeners();
     }
 
@@ -47,14 +60,8 @@ export class ThemeSwitcher {
             throw new Error(`Theme not found: ${themeKey}`);
         }
 
-        // Reset layout to baseline styles before applying theme resources
-        this.resetLayout();
-
         // Update navigation active state
         this.updateNavigation(themeKey);
-
-        // Remove old theme resources
-        this.removeThemeResources();
 
         // Add JS scripts first (for frameworks like Tailwind that need to load before CSS)
         await this.loadScripts(theme.js);
@@ -65,8 +72,8 @@ export class ThemeSwitcher {
         // Wait briefly to let external resources settle
         await this.waitForResources(150);
 
-        // Recreate widget with new theme
-        await this.recreateWidget(theme);
+        // Create widget with the theme
+        await this.createWidget(theme);
 
         // Update UI elements
         this.updateUI(theme);
@@ -82,13 +89,6 @@ export class ThemeSwitcher {
         document.querySelectorAll('.theme-btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.theme === activeThemeKey);
         });
-    }
-
-    /**
-     * Remove all theme-specific resources
-     */
-    removeThemeResources() {
-        document.querySelectorAll('[data-theme-resource]').forEach(el => el.remove());
     }
 
     /**
@@ -146,23 +146,6 @@ export class ThemeSwitcher {
     }
 
     /**
-     * Reset layout to baseline styles
-     */
-    resetLayout() {
-        document.body.className = '';
-
-        const container = document.getElementById('demo-container');
-        if (container) {
-            container.className = 'demo-container';
-        }
-
-        const card = document.getElementById('demo-card');
-        if (card) {
-            card.className = 'demo-card';
-        }
-    }
-
-    /**
      * Wait for resources to load
      */
     waitForResources(delay) {
@@ -170,15 +153,9 @@ export class ThemeSwitcher {
     }
 
     /**
-     * Recreate the widget with new theme
+     * Create the widget with the given theme
      */
-    async recreateWidget(theme) {
-        // Destroy old widget
-        if (this.currentWidget) {
-            this.currentWidget.destroy();
-            this.currentWidget = null;
-        }
-
+    async createWidget(theme) {
         // Import theme module if specified
         let themeModule = null;
         if (theme.themeModule) {
@@ -242,11 +219,16 @@ new FilteredSelectMultiple(select${optionBlock});${disabledBlock}`;
         document.querySelectorAll('.theme-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const themeKey = btn.dataset.theme;
-                if (themeKey) {
-                    this.applyTheme(themeKey).catch(error => {
-                        console.error('Failed to apply theme:', themeKey, error);
-                    });
+                if (!themeKey) return;
+
+                // Reload with the new theme, keeping the other parameters
+                const params = new URLSearchParams(location.search);
+                if (themeKey === 'default') {
+                    params.delete('theme');
+                } else {
+                    params.set('theme', themeKey);
                 }
+                location.search = params.toString();
             });
         });
 
@@ -256,6 +238,16 @@ new FilteredSelectMultiple(select${optionBlock});${disabledBlock}`;
                 // No rebuild needed: the widget follows `disabled` on its <select> itself
                 document.querySelector('#demo-select').disabled = disabledToggle.checked;
                 this.updateCodeExample(this.themes[this.currentTheme]);
+
+                // Remember the state in the URL, so a theme switch keeps it
+                const params = new URLSearchParams(location.search);
+                if (disabledToggle.checked) {
+                    params.set('disabled', '1');
+                } else {
+                    params.delete('disabled');
+                }
+                const query = params.toString();
+                history.replaceState(null, '', query ? `?${query}` : location.pathname);
             });
         }
     }

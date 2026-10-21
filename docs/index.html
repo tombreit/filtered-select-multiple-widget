@@ -20,12 +20,43 @@
     body {
       max-width: 1200px !important;
       margin: 0 auto !important;
+      /* Frameworks like Bootstrap set their own body background */
+      background: #f4f6f8 !important;
     }
 
-    body>h1 {
+    /* Intro: explicit styles so framework resets (e.g. Tailwind preflight) don't strip them */
+    .demo-intro h1 {
       font-size: 2rem;
       font-weight: bold;
       margin: 1rem 0;
+    }
+
+    .demo-intro h2 {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin: 1.5rem 0 0.75rem;
+    }
+
+    .demo-intro p {
+      margin: 0 0 1rem;
+      line-height: 1.5;
+    }
+
+    .demo-intro ul {
+      list-style: disc;
+      padding-left: 1.5rem;
+      margin: 0 0 1rem;
+    }
+
+    .demo-intro a {
+      color: #0052cc;
+      text-decoration: underline;
+    }
+
+    .demo-intro code {
+      font-family: ui-monospace, monospace;
+      font-size: 0.9em;
+      color: inherit;
     }
 
     .plain-container {
@@ -138,28 +169,29 @@
 </head>
 
 <body>
-  <h1 id="demo-title">Filtered Select Multiple Demo</h1>
+  <header class="demo-intro">
+    <h1 id="demo-title">Filtered Select Multiple Demo</h1>
 
-  <p>
+    <p>
+      A dependency-free, JavaScript implementation of Django's dual-pane “FilteredSelectMultiple” widget. It transforms a
+      native <code>&lt;select multiple&gt;</code> element into a picker with move buttons and client-side filtering.
+    </p>
 
-    A dependency-free, JavaScript implementation of Django's dual-pane “FilteredSelectMultiple” widget. It transforms a
-    native <code>&lt;select multiple&gt;</code> element into a picker with move buttons and client-side filtering.
-  </p>
+    <h2>Motivation</h2>
 
-  <h2>Motivation</h2>
+    <p>
+      I had been missing the beautiful and, above all, practical Django admin widget <code>filter-horizontal</code> outside of the
+      Django Admin interface for quite some time.
+    </p>
 
-  <p>
-    I had been missing the beautiful and, above all, practical Django admin widget <code>filter-horizontal</code> outside of the
-    Django Admin interface for quite some time.
-  </p>
-
-  <h2>Links</h2>
-  <ul>
-    <li><a href="https://github.com/tombreit/filtered-select-multiple-widget/blob/main/README.md">Docs</a></li>
-    <li><a href="https://github.com/tombreit/filtered-select-multiple-widget">Repository</a></li>
-    <li><a href="https://www.npmjs.com/package/filtered-select-multiple-widget">NPM package</a></li>
-    <li><a href="https://tombreit.github.io/filtered-select-multiple-widget/">Demo (you are here)</a></li>
-  </ul>
+    <h2>Links</h2>
+    <ul>
+      <li><a href="https://github.com/tombreit/filtered-select-multiple-widget/blob/main/README.md">Docs</a></li>
+      <li><a href="https://github.com/tombreit/filtered-select-multiple-widget">Repository</a></li>
+      <li><a href="https://www.npmjs.com/package/filtered-select-multiple-widget">NPM package</a></li>
+      <li><a href="https://tombreit.github.io/filtered-select-multiple-widget/">Demo (you are here)</a></li>
+    </ul>
+  </header>
 
   <!-- Theme Navigation -->
   <nav class="theme-nav" aria-label="Demo options">
